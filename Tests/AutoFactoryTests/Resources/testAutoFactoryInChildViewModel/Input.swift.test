@@ -1,0 +1,68 @@
+import CaseSupport
+import Changeable
+import RxSwift
+import UIBase
+
+@AutoFactory
+public class ChildViewModel: BaseViewModel<ChildViewModel.State> {
+  public struct Dependencies {
+    let backgroundScheduler: SchedulerType
+  }
+
+  public enum Actions {
+    struct Dismiss: ActionType {}
+    struct Done: ActionType {}
+  }
+
+  public struct Parameters {}
+
+  @Changeable
+  public struct State: Triggerable {
+    @CaseDetection
+    @CaseConversion
+    public enum Trigger: TriggerProtocol {
+      case done
+      case dismiss
+    }
+
+    public let trigger: Trigger?
+
+    static func initial() -> State {
+      State(
+        trigger: nil
+      )
+    }
+  }
+
+  init(
+    dependencies: Dependencies,
+    parameters: Parameters
+  ) {
+    self.dependencies = dependencies
+    self.parameters = parameters
+
+    super.init()
+
+    merger = { actions, result in
+      result.append(
+        actions.ofType(Actions.Done.self)
+          .replaceWith(SetValue.with(keyPath: \State.trigger, value: .done))
+      )
+
+      result.append(
+        actions.ofType(Actions.Dismiss.self)
+          .replaceWith(SetValue.with(keyPath: \State.trigger, value: .dismiss))
+      )
+    }
+
+    results = Self.result(
+      actions.asObservable(),
+      initialState: State.initial(),
+      scheduler: dependencies.backgroundScheduler,
+      merger: merger
+    )
+  }
+
+  private let dependencies: Dependencies
+  private let parameters: Parameters
+}

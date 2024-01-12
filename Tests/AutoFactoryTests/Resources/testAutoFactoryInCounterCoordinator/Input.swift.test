@@ -1,0 +1,102 @@
+import Assets
+import AutoFactory
+import Dip
+import RxSwift
+import UIBase
+import UIKit
+
+@AutoFactory
+public class CounterCoordinator: BaseCoordinator<NoCoordinatorResult> {
+  public struct Dependencies {
+    let childCoordinatorFactory: ChildCoordinator.Factory
+    let counterViewModelFactory: CounterViewModel.Factory
+  }
+
+  init(dependencies: Dependencies, tabBarController: TabBarController) {
+    self.dependencies = dependencies
+    self.tabBarController = tabBarController
+  }
+
+  override public func start() -> CoordinationResult {
+    let viewModel = dependencies.counterViewModelFactory.generate()
+
+    let navigationController = BaseNavigationController(
+      rootViewController: CounterViewController(viewModel: viewModel)
+    ).with {
+      $0.navigationBar.prefersLargeTitles = true
+    }
+
+    tabBarController.addViewController(navigationController)
+
+    // Show Child view
+    viewModel.results
+      .whenTriggering(.showChildView)
+      .observe(on: MainScheduler.instance)
+      .flatMap { [unowned self] _ in
+        coordinate(
+          to: dependencies.childCoordinatorFactory.generate(
+            parameters: ChildViewModel.Parameters(),
+            parentViewController: navigationController
+          )
+        )
+      }
+      .ofType(ChildCoordinatorResult.Success.self)
+      .withLatestFrom(viewModel.results)
+      .map(\.counter)
+      .map(CounterViewModel.Actions.IncreaseCounter.init)
+      .asDriverOnErrorFatal()
+      .drive(viewModel.rx.dispatch)
+      .disposed(by: disposeBag)
+
+    // Show N42 website
+    viewModel.results
+      .whenTriggering(.showWebsite)
+      .observe(on: MainScheduler.instance)
+      .flatMap { [unowned self] _ -> Observable<SimpleCoordinatorResultType> in
+        guard let url = URL(string: "https://number42.de") else {
+          fatalError("Website not found")
+        }
+
+        let websiteVC = viewController(
+          for: url,
+          called: L10n.counterWebsite,
+          viewModel: viewModel
+        )
+
+        navigationController.present(websiteVC, animated: true)
+
+        return viewModel.results
+          .whenTriggering(.dismissWebsite)
+          .observe(on: MainScheduler.instance)
+          .do(
+            onNext: { _ in
+              websiteVC.dismiss(animated: true)
+            }
+          )
+          .replaceWith(SimpleCoordinatorResult.Done())
+      }
+      .subscribe()
+      .disposed(by: disposeBag)
+
+    return Single.never()
+  }
+
+  private let dependencies: Dependencies
+  private let tabBarController: TabBarController
+
+  private func viewController(
+    for url: URL,
+    called title: String,
+    viewModel: CounterViewModel
+  ) -> UIViewController {
+    let navigationController = BaseNavigationController(
+      rootViewController: GenericWebViewController(
+        url: url,
+        title: title,
+        viewModel: viewModel
+      )
+    )
+
+    return navigationController
+  }
+}
