@@ -9,7 +9,6 @@ import XCTest
   let testMacros: [String: Macro.Type] = [
     "AutoFactory": AutoFactoryMacro.self
   ]
-#endif
 
 final class AutoFactoryTests: XCTestCase {
   func testAutoFactoryInCounterCoordinator() throws {
@@ -20,3 +19,5 @@ final class AutoFactoryTests: XCTestCase {
     testMacro(macros: testMacros)
   }
 }
+#endif
+
