@@ -24,16 +24,14 @@ public struct AutoFactoryMacro: MemberMacro {
 
     let dependencyNames = declaration.as(ClassDeclSyntax.self)!.memberBlock.members
       .compactMap {
-        $0.as(MemberBlockItemSyntax.self)?
-          .decl.as(StructDeclSyntax.self)
+        $0.decl.as(StructDeclSyntax.self)
       }
       .first {
         $0.name.text == "Dependencies"
       }!
-      .memberBlock.members.compactMap { $0.as(MemberBlockItemSyntax.self)?
-        .decl.as(VariableDeclSyntax.self)?
+      .memberBlock.members.compactMap { $0.decl.as(VariableDeclSyntax.self)?
         .bindings
-        .compactMap { $0.as(PatternBindingSyntax.self)!.pattern.description }
+        .compactMap { $0.pattern.description }
       }
       .reduce([], +)
 
