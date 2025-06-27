@@ -17,7 +17,7 @@ let package = Package(
     )
   ],
   dependencies: [
-    .package(url: "https://github.com/num42/swift-macrotester.git", from: "1.0.2"),
+    .package(url: "https://github.com/num42/swift-macrotester.git", from: "1.0.3"),
     .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "601.0.1")
   ],
   targets: [
