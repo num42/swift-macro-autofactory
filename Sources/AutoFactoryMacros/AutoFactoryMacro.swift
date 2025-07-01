@@ -62,7 +62,7 @@ public struct AutoFactoryMacro: MemberMacro {
 
     let dependenciesString =
       dependencyNames.map {
-        $0.appending(": container.resolve()")
+        $0 + (": container.resolve()")
       }
       .joined(separator: ",\n")
       .indentedBy("          ")
