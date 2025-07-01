@@ -7,6 +7,7 @@ public struct AutoFactoryMacro: MemberMacro {
   public static func expansion(
     of node: SwiftSyntax.AttributeSyntax,
     providingMembersOf declaration: some SwiftSyntax.DeclGroupSyntax,
+    conformingTo protocols: [TypeSyntax],
     in context: some SwiftSyntaxMacros.MacroExpansionContext
   ) throws -> [SwiftSyntax.DeclSyntax] {
     let className = declaration.as(ClassDeclSyntax.self)!.name.description
