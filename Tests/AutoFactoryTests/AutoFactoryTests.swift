@@ -1,7 +1,7 @@
 import MacroTester
 import SwiftSyntaxMacros
 import SwiftSyntaxMacrosTestSupport
-import XCTest
+import Testing
 
 #if canImport(AutoFactoryMacros)
   import AutoFactoryMacros
@@ -10,13 +10,13 @@ import XCTest
     "AutoFactory": AutoFactoryMacro.self
   ]
 
-final class AutoFactoryTests: XCTestCase {
-  func testAutoFactoryInCounterCoordinator() throws {
-    testMacro(macros: testMacros)
+@Suite struct AutoFactoryTests {
+  @Test func autoFactoryInCounterCoordinator() {
+      MacroTester.testMacro(macros: testMacros)
   }
 
-  func testAutoFactoryInChildViewModel() throws {
-    testMacro(macros: testMacros)
+  @Test func autoFactoryInChildViewModel() {
+      MacroTester.testMacro(macros: testMacros)
   }
 }
 #endif
