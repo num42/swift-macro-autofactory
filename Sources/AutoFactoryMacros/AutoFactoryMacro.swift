@@ -12,7 +12,8 @@ public struct AutoFactoryMacro: MemberMacro {
   ) throws -> [SwiftSyntax.DeclSyntax] {
     let className = declaration.as(ClassDeclSyntax.self)!.name.description
 
-    let initializers = declaration
+    let initializers =
+      declaration
       .as(ClassDeclSyntax.self)!
       .memberBlock
       .members
@@ -30,17 +31,20 @@ public struct AutoFactoryMacro: MemberMacro {
       .first {
         $0.name.text == "Dependencies"
       }!
-      .memberBlock.members.compactMap { $0.decl.as(VariableDeclSyntax.self)?
-        .bindings
-        .compactMap { $0.pattern.description }
+      .memberBlock.members.compactMap {
+        $0.decl.as(VariableDeclSyntax.self)?
+          .bindings
+          .compactMap { $0.pattern.description }
       }
       .reduce([], +)
 
     let generators = parametersArray.map { parameters in
-      let publicParameters = parameters
+      let publicParameters =
+        parameters
         .filter { $0.name != "dependencies" }
 
-      let signature = publicParameters.isEmpty
+      let signature =
+        publicParameters.isEmpty
         ? "public func generate() -> \(className)"
         : """
         public func generate(
@@ -49,12 +53,12 @@ public struct AutoFactoryMacro: MemberMacro {
         """
 
       return """
-      \(signature) {
-        \(className)(
-          \(parameters.map { "\($0.name): \($0.name)" }.joined(separator: ",\n    "))
-        )
-      }
-      """
+        \(signature) {
+          \(className)(
+            \(parameters.map { "\($0.name): \($0.name)" }.joined(separator: ",\n    "))
+          )
+        }
+        """
     }
 
     let generatorsString = generators.map { $0.indentedBy("    ") }
@@ -70,29 +74,29 @@ public struct AutoFactoryMacro: MemberMacro {
     return [
       DeclSyntax(
         extendedGraphemeClusterLiteral: """
-        public final class Factory {
-          public init(dependencies: \(className).Dependencies) {
-            self.dependencies = dependencies
-          }
+          public final class Factory {
+            public init(dependencies: \(className).Dependencies) {
+              self.dependencies = dependencies
+            }
 
-          \(generatorsString)
+            \(generatorsString)
 
-          let dependencies: \(className).Dependencies
+            let dependencies: \(className).Dependencies
 
-          public static func register(
-            in container: DependencyContainer,
-            scope: ComponentScope = .shared
-          ) {
-            container.register(scope) {
-              try \(className).Factory(
-                dependencies: \(className).Dependencies(
-                  \(dependenciesString)
+            public static func register(
+              in container: DependencyContainer,
+              scope: ComponentScope = .shared
+            ) {
+              container.register(scope) {
+                try \(className).Factory(
+                  dependencies: \(className).Dependencies(
+                    \(dependenciesString)
+                  )
                 )
-              )
+              }
             }
           }
-        }
-        """
+          """
       )
     ]
   }

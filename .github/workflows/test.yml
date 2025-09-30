@@ -22,3 +22,18 @@ jobs:
 
       - name: Run Tests
         run: swift test -Xswiftc -warnings-as-errors --enable-experimental-prebuilts
+  format:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Run formatter
+        run: sh .github/format.sh
+
+      - name: Check if formatting changes exist
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Formatting changes detected."
+            exit 1
+          fi

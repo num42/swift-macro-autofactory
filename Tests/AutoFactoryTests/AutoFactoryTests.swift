@@ -10,14 +10,13 @@ import Testing
     "AutoFactory": AutoFactoryMacro.self
   ]
 
-@Suite struct AutoFactoryTests {
-  @Test func autoFactoryInCounterCoordinator() {
+  @Suite struct AutoFactoryTests {
+    @Test func autoFactoryInCounterCoordinator() {
       MacroTester.testMacro(macros: testMacros)
-  }
+    }
 
-  @Test func autoFactoryInChildViewModel() {
+    @Test func autoFactoryInChildViewModel() {
       MacroTester.testMacro(macros: testMacros)
+    }
   }
-}
 #endif
-
