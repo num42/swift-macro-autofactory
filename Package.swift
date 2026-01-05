@@ -25,13 +25,15 @@ let package = Package(
       dependencies: [
         .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
         .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
-      ]
+      ],
+      path: "Sources/Internal"
     ),
     .target(
       name: name,
       dependencies: [
         .target(name: "\(name)Macros")
-      ]
+      ],
+      path: "Sources/External"
     ),
     .testTarget(
       name: "\(name)Tests",
@@ -40,6 +42,7 @@ let package = Package(
         .product(name: "MacroTester", package: "swift-macrotester"),
         .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
       ],
+      path: "Tests/MacroTests",
       resources: [.copy("Resources")]
     ),
   ]
