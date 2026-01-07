@@ -1,3 +1,4 @@
-/.swiftpm
-/Package.resolved
-/.build
+.swiftpm
+Package.resolved
+.build
+.DS_Store

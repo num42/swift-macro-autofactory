@@ -10,7 +10,8 @@ import Testing
     "AutoFactory": AutoFactoryMacro.self
   ]
 
-  @Suite struct AutoFactoryTests {
+  @Suite
+  struct AutoFactoryMacroTests {
     @Test func autoFactoryInCounterCoordinator() {
       MacroTester.testMacro(macros: testMacros)
     }
