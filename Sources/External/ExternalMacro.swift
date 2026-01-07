@@ -54,4 +54,3 @@ public macro AutoFactory() =
     module: "AutoFactoryMacros",
     type: "AutoFactoryMacro"
   )
-
