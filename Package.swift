@@ -8,7 +8,7 @@ let name = "AutoFactory"
 
 let package = Package(
   name: name,
-  platforms: [.macOS(.v12), .iOS(.v13), .tvOS(.v13), .watchOS(.v6), .macCatalyst(.v13)],
+  platforms: [.macOS(.v13), .iOS(.v13), .tvOS(.v13), .watchOS(.v6), .macCatalyst(.v13)],
   products: [
     .library(
       name: name,
@@ -16,7 +16,7 @@ let package = Package(
     )
   ],
   dependencies: [
-    .package(url: "https://github.com/num42/swift-macrotester.git", from: "2.2.0"),
+    .package(url: "https://github.com/num42/swift-macrotester.git", from: "2.2.2"),
     .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "602.0.0"),
   ],
   targets: [
