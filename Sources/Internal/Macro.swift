@@ -3,28 +3,6 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-/// Implements the `@AutoFactory` macro: a type-attached member macro that synthesizes a nested
-/// `Factory` type for the annotated class.
-///
-/// When applied to a class that defines a nested `Dependencies` struct and initializers that
-/// include a `dependencies` parameter of that type, the macro:
-/// - Generates one `generate(...)` method per initializer that forwards all non-`dependencies`
-///   parameters and supplies the `dependencies` automatically.
-/// - Emits a static `register(in:scope:)` helper that constructs and registers a `Factory` in a
-///   dependency container by resolving each property of `Dependencies` via `container.resolve()`.
-///
-/// Preconditions
-/// - The declaration must be a `class`.
-/// - The class must declare `struct Dependencies` with stored properties for each dependency.
-/// - Each initializer that should be exposed must include a parameter named
-///   `dependencies: ClassName.Dependencies`.
-///
-/// Notes
-/// - This implementation currently assumes these preconditions and uses force-unwraps; misuse
-///   will result in a trap during expansion. Future improvements can replace these with proper
-///   diagnostics emitted via `MacroExpansionContext`.
-///
-/// See also: The public `AutoFactory` macro declaration in `ExternalMacro.swift`.
 public struct AutoFactoryMacro: MemberMacro {
   public enum MacroDiagnostic: String, DiagnosticMessage {
     case requiresClass = "#AutoFactory requires a class"
@@ -41,16 +19,6 @@ public struct AutoFactoryMacro: MemberMacro {
     public var severity: DiagnosticSeverity { .error }
   }
 
-  /// Expands `@AutoFactory` for the given declaration by synthesizing a nested `Factory` class.
-  ///
-  /// - Parameters:
-  ///   - node: The attribute that triggered expansion. Not used directly.
-  ///   - declaration: The declaration annotated with `@AutoFactory`. Expected to be a `ClassDeclSyntax`.
-  ///   - protocols: Protocols the type is conforming to. Not used.
-  ///   - context: The macro expansion context. Not used at the moment.
-  /// - Returns: An array containing a single `DeclSyntax` that represents the nested `Factory` class.
-  /// - Throws: Currently does not throw intentionally, but the signature reserves the right to throw
-  ///   once diagnostics are introduced.
   public static func expansion(
     of node: SwiftSyntax.AttributeSyntax,
     providingMembersOf declaration: some SwiftSyntax.DeclGroupSyntax,
