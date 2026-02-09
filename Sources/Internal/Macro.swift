@@ -29,7 +29,8 @@ public struct AutoFactoryMacro: MemberMacro {
   enum MacroDiagnostic: String, DiagnosticMessage {
     case requiresClass = "#AutoFactory requires a class"
     case requiresDependencies = "#AutoFactory requires a nested Dependencies struct"
-    case requiresDependenciesInitializer = "#AutoFactory requires initializers with a dependencies parameter"
+    case requiresDependenciesInitializer =
+      "#AutoFactory requires initializers with a dependencies parameter"
 
     var message: String { rawValue }
 
@@ -98,9 +99,11 @@ public struct AutoFactoryMacro: MemberMacro {
         .map { (name: $0.firstName.text, type: $0.type.description) }
     }
 
-    guard parametersArray.allSatisfy({ parameters in
-      parameters.contains { $0.name == "dependencies" }
-    }) else {
+    guard
+      parametersArray.allSatisfy({ parameters in
+        parameters.contains { $0.name == "dependencies" }
+      })
+    else {
       let diagnostic = Diagnostic(
         node: Syntax(node),
         message: MacroDiagnostic.requiresDependenciesInitializer
