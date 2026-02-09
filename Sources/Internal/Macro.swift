@@ -26,19 +26,19 @@ import SwiftSyntaxMacros
 ///
 /// See also: The public `AutoFactory` macro declaration in `ExternalMacro.swift`.
 public struct AutoFactoryMacro: MemberMacro {
-  enum MacroDiagnostic: String, DiagnosticMessage {
+  public enum MacroDiagnostic: String, DiagnosticMessage {
     case requiresClass = "#AutoFactory requires a class"
     case requiresDependencies = "#AutoFactory requires a nested Dependencies struct"
     case requiresDependenciesInitializer =
       "#AutoFactory requires initializers with a dependencies parameter"
 
-    var message: String { rawValue }
+    public var message: String { rawValue }
 
-    var diagnosticID: MessageID {
+    public var diagnosticID: MessageID {
       MessageID(domain: "AutoFactory", id: rawValue)
     }
 
-    var severity: DiagnosticSeverity { .error }
+    public var severity: DiagnosticSeverity { .error }
   }
 
   /// Expands `@AutoFactory` for the given declaration by synthesizing a nested `Factory` class.
