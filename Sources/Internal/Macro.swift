@@ -1,3 +1,4 @@
+import SwiftDiagnostics
 import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
@@ -25,6 +26,20 @@ import SwiftSyntaxMacros
 ///
 /// See also: The public `AutoFactory` macro declaration in `ExternalMacro.swift`.
 public struct AutoFactoryMacro: MemberMacro {
+  enum MacroDiagnostic: String, DiagnosticMessage {
+    case requiresClass = "#AutoFactory requires a class"
+    case requiresDependencies = "#AutoFactory requires a nested Dependencies struct"
+    case requiresDependenciesInitializer = "#AutoFactory requires initializers with a dependencies parameter"
+
+    var message: String { rawValue }
+
+    var diagnosticID: MessageID {
+      MessageID(domain: "AutoFactory", id: rawValue)
+    }
+
+    var severity: DiagnosticSeverity { .error }
+  }
+
   /// Expands `@AutoFactory` for the given declaration by synthesizing a nested `Factory` class.
   ///
   /// - Parameters:
@@ -61,11 +76,19 @@ public struct AutoFactoryMacro: MemberMacro {
      - Initializers include a parameter named `dependencies` of the appropriate type.
     */
 
-    let className = declaration.as(ClassDeclSyntax.self)!.name.description
+    guard let classDeclaration = declaration.as(ClassDeclSyntax.self) else {
+      let diagnostic = Diagnostic(
+        node: Syntax(node),
+        message: MacroDiagnostic.requiresClass
+      )
+      context.diagnose(diagnostic)
+      throw DiagnosticsError(diagnostics: [diagnostic])
+    }
+
+    let className = classDeclaration.name.description
 
     let initializers =
-      declaration
-      .as(ClassDeclSyntax.self)!
+      classDeclaration
       .memberBlock
       .members
       .compactMap { $0.decl.as(InitializerDeclSyntax.self) }
@@ -75,20 +98,37 @@ public struct AutoFactoryMacro: MemberMacro {
         .map { (name: $0.firstName.text, type: $0.type.description) }
     }
 
+    guard parametersArray.allSatisfy({ parameters in
+      parameters.contains { $0.name == "dependencies" }
+    }) else {
+      let diagnostic = Diagnostic(
+        node: Syntax(node),
+        message: MacroDiagnostic.requiresDependenciesInitializer
+      )
+      context.diagnose(diagnostic)
+      throw DiagnosticsError(diagnostics: [diagnostic])
+    }
+
     // Locate nested `Dependencies` and collect property names (force-unwrap assumes it exists).
-    let dependencyNames = declaration.as(ClassDeclSyntax.self)!.memberBlock.members
-      .compactMap {
-        $0.decl.as(StructDeclSyntax.self)
-      }
-      .first {
-        $0.name.text == "Dependencies"
-      }!
-      .memberBlock.members.compactMap {
-        $0.decl.as(VariableDeclSyntax.self)?
-          .bindings
-          .compactMap { $0.pattern.description }
-      }
-      .reduce([], +)
+    guard
+      let dependenciesDeclaration = classDeclaration.memberBlock.members
+        .compactMap({ $0.decl.as(StructDeclSyntax.self) })
+        .first(where: { $0.name.text == "Dependencies" })
+    else {
+      let diagnostic = Diagnostic(
+        node: Syntax(node),
+        message: MacroDiagnostic.requiresDependencies
+      )
+      context.diagnose(diagnostic)
+      throw DiagnosticsError(diagnostics: [diagnostic])
+    }
+
+    let dependencyNames = dependenciesDeclaration.memberBlock.members.compactMap {
+      $0.decl.as(VariableDeclSyntax.self)?
+        .bindings
+        .compactMap { $0.pattern.description }
+    }
+    .reduce([], +)
 
     let generators = parametersArray.map { parameters in
       let publicParameters =
