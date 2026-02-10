@@ -103,7 +103,7 @@ public class CounterCoordinator: BaseCoordinator<NoCoordinatorResult> {
         self.dependencies = dependencies
       }
 
-      public func generate(
+          public func generate(
         tabBarController: TabBarController
       ) -> CounterCoordinator {
         CounterCoordinator(

@@ -54,8 +54,6 @@ public struct AutoFactoryMacro: MemberMacro {
       throw DiagnosticsError(diagnostics: [diagnostic])
     }
 
-    let className = classDeclaration.name.description
-
     let initializers =
       classDeclaration
       .memberBlock
@@ -101,14 +99,7 @@ public struct AutoFactoryMacro: MemberMacro {
     }
     .reduce([], +)
 
-    func indent(_ text: String, by spaces: Int) -> String {
-      let padding = String(repeating: " ", count: spaces)
-      return
-        text
-        .split(separator: "\n", omittingEmptySubsequences: false)
-        .map { $0.isEmpty ? "" : padding + $0 }
-        .joined(separator: "\n")
-    }
+    let className = classDeclaration.name.description
 
     let generators = parametersArray.map { parameters in
       let publicParameters =
@@ -135,28 +126,26 @@ public struct AutoFactoryMacro: MemberMacro {
 
     let generatorsString =
       generators
-      .map { indent($0, by: 2) }
+      .map { $0.indentedBy("  ") }
       .joined(separator: "\n\n")
 
     // Map each dependency to a `name: container.resolve()` pair used inside `register(...)`.
     let dependenciesString =
-      indent(
-        dependencyNames
-          .map { $0 + (": container.resolve()") }
-          .joined(separator: ",\n"),
-        by: 10
-      )
+      dependencyNames
+      .map { $0 + (": container.resolve()") }
+      .joined(separator: ",\n")
+      .indentedBy("          ")
 
     let factoryString = """
       public final class Factory {
         public init(dependencies: \(className).Dependencies) {
           self.dependencies = dependencies
         }
-
-      \(generatorsString)
-
+        
+          \(generatorsString)
+        
         let dependencies: \(className).Dependencies
-
+        
         public static func register(
           in container: DependencyContainer,
           scope: ComponentScope = .shared
