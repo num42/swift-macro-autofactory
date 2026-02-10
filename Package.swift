@@ -1,14 +1,14 @@
 // swift-tools-version:6.2
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
-import CompilerPluginSupport
-import PackageDescription
+internal import CompilerPluginSupport
+internal import PackageDescription
 
 let name = "AutoFactory"
 
 let package = Package(
   name: name,
-  platforms: [.macOS(.v13), .iOS(.v13), .tvOS(.v13), .watchOS(.v6), .macCatalyst(.v13)],
+  platforms: [.macOS(.v14), .iOS(.v13), .tvOS(.v13), .watchOS(.v6), .macCatalyst(.v13)],
   products: [
     .library(
       name: name,
@@ -16,6 +16,7 @@ let package = Package(
     )
   ],
   dependencies: [
+    .package(url: "https://github.com/num42/swift-macrohelper.git", from: "1.0.1"),
     .package(url: "https://github.com/num42/swift-macrotester.git", from: "2.2.2"),
     .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "602.0.0"),
   ],
@@ -23,9 +24,10 @@ let package = Package(
     .macro(
       name: "\(name)Macros",
       dependencies: [
+        .product(name: "MacroHelper", package: "swift-macrohelper"),
+        .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
         .product(name: "SwiftDiagnostics", package: "swift-syntax"),
         .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
-        .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
       ],
       path: "Sources/Internal"
     ),

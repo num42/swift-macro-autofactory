@@ -103,14 +103,14 @@ public class CounterCoordinator: BaseCoordinator<NoCoordinatorResult> {
         self.dependencies = dependencies
       }
 
-      public func generate(
-          tabBarController: TabBarController
-        ) -> CounterCoordinator {
-          CounterCoordinator(
-            dependencies: dependencies,
-            tabBarController: tabBarController
-          )
-        }
+          public func generate(
+        tabBarController: TabBarController
+      ) -> CounterCoordinator {
+        CounterCoordinator(
+          dependencies: dependencies,
+          tabBarController: tabBarController
+        )
+      }
 
       let dependencies: CounterCoordinator.Dependencies
 

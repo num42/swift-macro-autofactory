@@ -1,30 +1,8 @@
-import SwiftDiagnostics
-import SwiftSyntax
-import SwiftSyntaxBuilder
-import SwiftSyntaxMacros
+internal import MacroHelper
+public import SwiftDiagnostics
+public import SwiftSyntax
+public import SwiftSyntaxMacros
 
-/// Implements the `@AutoFactory` macro: a type-attached member macro that synthesizes a nested
-/// `Factory` type for the annotated class.
-///
-/// When applied to a class that defines a nested `Dependencies` struct and initializers that
-/// include a `dependencies` parameter of that type, the macro:
-/// - Generates one `generate(...)` method per initializer that forwards all non-`dependencies`
-///   parameters and supplies the `dependencies` automatically.
-/// - Emits a static `register(in:scope:)` helper that constructs and registers a `Factory` in a
-///   dependency container by resolving each property of `Dependencies` via `container.resolve()`.
-///
-/// Preconditions
-/// - The declaration must be a `class`.
-/// - The class must declare `struct Dependencies` with stored properties for each dependency.
-/// - Each initializer that should be exposed must include a parameter named
-///   `dependencies: ClassName.Dependencies`.
-///
-/// Notes
-/// - This implementation currently assumes these preconditions and uses force-unwraps; misuse
-///   will result in a trap during expansion. Future improvements can replace these with proper
-///   diagnostics emitted via `MacroExpansionContext`.
-///
-/// See also: The public `AutoFactory` macro declaration in `ExternalMacro.swift`.
 public struct AutoFactoryMacro: MemberMacro {
   public enum MacroDiagnostic: String, DiagnosticMessage {
     case requiresClass = "#AutoFactory requires a class"
@@ -41,16 +19,6 @@ public struct AutoFactoryMacro: MemberMacro {
     public var severity: DiagnosticSeverity { .error }
   }
 
-  /// Expands `@AutoFactory` for the given declaration by synthesizing a nested `Factory` class.
-  ///
-  /// - Parameters:
-  ///   - node: The attribute that triggered expansion. Not used directly.
-  ///   - declaration: The declaration annotated with `@AutoFactory`. Expected to be a `ClassDeclSyntax`.
-  ///   - protocols: Protocols the type is conforming to. Not used.
-  ///   - context: The macro expansion context. Not used at the moment.
-  /// - Returns: An array containing a single `DeclSyntax` that represents the nested `Factory` class.
-  /// - Throws: Currently does not throw intentionally, but the signature reserves the right to throw
-  ///   once diagnostics are introduced.
   public static func expansion(
     of node: SwiftSyntax.AttributeSyntax,
     providingMembersOf declaration: some SwiftSyntax.DeclGroupSyntax,
@@ -85,8 +53,6 @@ public struct AutoFactoryMacro: MemberMacro {
       context.diagnose(diagnostic)
       throw DiagnosticsError(diagnostics: [diagnostic])
     }
-
-    let className = classDeclaration.name.description
 
     let initializers =
       classDeclaration
@@ -133,6 +99,8 @@ public struct AutoFactoryMacro: MemberMacro {
     }
     .reduce([], +)
 
+    let className = classDeclaration.name.description
+
     let generators = parametersArray.map { parameters in
       let publicParameters =
         parameters
@@ -143,7 +111,7 @@ public struct AutoFactoryMacro: MemberMacro {
         ? "public func generate() -> \(className)"
         : """
         public func generate(
-          \(publicParameters.map { "\($0.name): \($0.type)" }.joined(separator: ",\n    "))
+          \(publicParameters.map { "\($0.name): \($0.type)" }.joined(separator: ",\n  "))
         ) -> \(className)
         """
 
@@ -156,45 +124,46 @@ public struct AutoFactoryMacro: MemberMacro {
         """
     }
 
-    let generatorsString = generators.map { $0.indentedBy("    ") }
+    let generatorsString =
+      generators
+      .map { $0.indentedBy("  ") }
       .joined(separator: "\n\n")
 
     // Map each dependency to a `name: container.resolve()` pair used inside `register(...)`.
     let dependenciesString =
-      dependencyNames.map {
-        $0 + (": container.resolve()")
-      }
+      dependencyNames
+      .map { $0 + (": container.resolve()") }
       .joined(separator: ",\n")
       .indentedBy("          ")
 
+    let factoryString = """
+      public final class Factory {
+        public init(dependencies: \(className).Dependencies) {
+          self.dependencies = dependencies
+        }
+        
+          \(generatorsString)
+        
+        let dependencies: \(className).Dependencies
+        
+        public static func register(
+          in container: DependencyContainer,
+          scope: ComponentScope = .shared
+        ) {
+          container.register(scope) {
+            try \(className).Factory(
+              dependencies: \(className).Dependencies(
+      \(dependenciesString)
+              )
+            )
+          }
+        }
+      }
+      """
+
     // Emit the nested `Factory` class with initializer, `generate(...)` methods, and `register(...)`.
     return [
-      DeclSyntax(
-        extendedGraphemeClusterLiteral: """
-          public final class Factory {
-            public init(dependencies: \(className).Dependencies) {
-              self.dependencies = dependencies
-            }
-
-            \(generatorsString)
-
-            let dependencies: \(className).Dependencies
-
-            public static func register(
-              in container: DependencyContainer,
-              scope: ComponentScope = .shared
-            ) {
-              container.register(scope) {
-                try \(className).Factory(
-                  dependencies: \(className).Dependencies(
-                    \(dependenciesString)
-                  )
-                )
-              }
-            }
-          }
-          """
-      )
+      DeclSyntax(stringLiteral: factoryString).trimmed
     ]
   }
 }

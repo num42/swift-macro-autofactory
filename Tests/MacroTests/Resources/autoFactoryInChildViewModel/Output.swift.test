@@ -69,14 +69,14 @@ public class ChildViewModel: BaseViewModel<ChildViewModel.State> {
         self.dependencies = dependencies
       }
 
-      public func generate(
-          parameters: Parameters
-        ) -> ChildViewModel {
-          ChildViewModel(
-            dependencies: dependencies,
-            parameters: parameters
-          )
-        }
+          public func generate(
+        parameters: Parameters
+      ) -> ChildViewModel {
+        ChildViewModel(
+          dependencies: dependencies,
+          parameters: parameters
+        )
+      }
 
       let dependencies: ChildViewModel.Dependencies
 
