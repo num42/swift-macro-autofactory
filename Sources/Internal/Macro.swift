@@ -1,7 +1,7 @@
-import SwiftDiagnostics
-import SwiftSyntax
-import SwiftSyntaxBuilder
-import SwiftSyntaxMacros
+internal import MacroHelper
+public import SwiftDiagnostics
+public import SwiftSyntax
+public import SwiftSyntaxMacros
 
 public struct AutoFactoryMacro: MemberMacro {
   public enum MacroDiagnostic: String, DiagnosticMessage {
@@ -101,6 +101,15 @@ public struct AutoFactoryMacro: MemberMacro {
     }
     .reduce([], +)
 
+    func indent(_ text: String, by spaces: Int) -> String {
+      let padding = String(repeating: " ", count: spaces)
+      return
+        text
+        .split(separator: "\n", omittingEmptySubsequences: false)
+        .map { $0.isEmpty ? "" : padding + $0 }
+        .joined(separator: "\n")
+    }
+
     let generators = parametersArray.map { parameters in
       let publicParameters =
         parameters
@@ -111,7 +120,7 @@ public struct AutoFactoryMacro: MemberMacro {
         ? "public func generate() -> \(className)"
         : """
         public func generate(
-          \(publicParameters.map { "\($0.name): \($0.type)" }.joined(separator: ",\n    "))
+          \(publicParameters.map { "\($0.name): \($0.type)" }.joined(separator: ",\n  "))
         ) -> \(className)
         """
 
@@ -124,45 +133,48 @@ public struct AutoFactoryMacro: MemberMacro {
         """
     }
 
-    let generatorsString = generators.map { $0.indentedBy("    ") }
+    let generatorsString =
+      generators
+      .map { indent($0, by: 2) }
       .joined(separator: "\n\n")
 
     // Map each dependency to a `name: container.resolve()` pair used inside `register(...)`.
     let dependenciesString =
-      dependencyNames.map {
-        $0 + (": container.resolve()")
+      indent(
+        dependencyNames
+          .map { $0 + (": container.resolve()") }
+          .joined(separator: ",\n"),
+        by: 10
+      )
+
+    let factoryString = """
+      public final class Factory {
+        public init(dependencies: \(className).Dependencies) {
+          self.dependencies = dependencies
+        }
+
+      \(generatorsString)
+
+        let dependencies: \(className).Dependencies
+
+        public static func register(
+          in container: DependencyContainer,
+          scope: ComponentScope = .shared
+        ) {
+          container.register(scope) {
+            try \(className).Factory(
+              dependencies: \(className).Dependencies(
+      \(dependenciesString)
+              )
+            )
+          }
+        }
       }
-      .joined(separator: ",\n")
-      .indentedBy("          ")
+      """
 
     // Emit the nested `Factory` class with initializer, `generate(...)` methods, and `register(...)`.
     return [
-      DeclSyntax(
-        extendedGraphemeClusterLiteral: """
-          public final class Factory {
-            public init(dependencies: \(className).Dependencies) {
-              self.dependencies = dependencies
-            }
-
-            \(generatorsString)
-
-            let dependencies: \(className).Dependencies
-
-            public static func register(
-              in container: DependencyContainer,
-              scope: ComponentScope = .shared
-            ) {
-              container.register(scope) {
-                try \(className).Factory(
-                  dependencies: \(className).Dependencies(
-                    \(dependenciesString)
-                  )
-                )
-              }
-            }
-          }
-          """
-      )
+      DeclSyntax(stringLiteral: factoryString).trimmed
     ]
   }
 }

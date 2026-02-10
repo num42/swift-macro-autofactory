@@ -64,33 +64,33 @@ public class ChildViewModel: BaseViewModel<ChildViewModel.State> {
   private let dependencies: Dependencies
   private let parameters: Parameters
 
-    public final class Factory {
-      public init(dependencies: ChildViewModel.Dependencies) {
-        self.dependencies = dependencies
-      }
+  public final class Factory {
+    public init(dependencies: ChildViewModel.Dependencies) {
+      self.dependencies = dependencies
+    }
 
-      public func generate(
-          parameters: Parameters
-        ) -> ChildViewModel {
-          ChildViewModel(
-            dependencies: dependencies,
-            parameters: parameters
+    public func generate(
+      parameters: Parameters
+    ) -> ChildViewModel {
+      ChildViewModel(
+        dependencies: dependencies,
+        parameters: parameters
+      )
+    }
+
+    let dependencies: ChildViewModel.Dependencies
+
+    public static func register(
+      in container: DependencyContainer,
+      scope: ComponentScope = .shared
+    ) {
+      container.register(scope) {
+        try ChildViewModel.Factory(
+          dependencies: ChildViewModel.Dependencies(
+            backgroundScheduler: container.resolve()
           )
-        }
-
-      let dependencies: ChildViewModel.Dependencies
-
-      public static func register(
-        in container: DependencyContainer,
-        scope: ComponentScope = .shared
-      ) {
-        container.register(scope) {
-          try ChildViewModel.Factory(
-            dependencies: ChildViewModel.Dependencies(
-              backgroundScheduler: container.resolve()
-            )
-          )
-        }
+        )
       }
     }
+  }
 }

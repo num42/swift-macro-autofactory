@@ -1,5 +1,5 @@
-import SwiftCompilerPlugin
-import SwiftSyntaxMacros
+internal import SwiftCompilerPlugin
+internal import SwiftSyntaxMacros
 
 @main
 struct AutoFactoryPlugin: CompilerPlugin {
