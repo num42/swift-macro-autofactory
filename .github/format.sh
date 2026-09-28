@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
 
-cd ..
+cd "$(dirname "$0")/.."
 
 swift format --recursive --in-place .

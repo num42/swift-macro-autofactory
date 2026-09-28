@@ -2,6 +2,11 @@
 A Swift macro that generates a nested `Factory` for a class, producing convenient `generate(...)`
 methods and a registration helper for dependency injection.
 
+## Requirements
+
+- Swift 6.3 toolchain or later (tested with Xcode 27)
+- Platforms: macOS 14, iOS 13, tvOS 13, watchOS 6, macCatalyst 13
+
 ## Overview
 
 Annotate a class with `@AutoFactory` and declare a nested `Dependencies` struct. For each
