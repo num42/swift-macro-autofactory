@@ -1,16 +1,11 @@
-internal import MacroTester
-internal import SwiftSyntaxMacros
-internal import SwiftSyntaxMacrosTestSupport
+internal import SwiftSyntaxMacrosGenericTestSupport
 internal import Testing
 
 #if canImport(AutoFactoryMacros)
   import AutoFactoryMacros
 
-  @Suite struct AutoFactoryDiagnosticsTests {
-    let testMacros: [String: Macro.Type] = [
-      "AutoFactory": AutoFactoryMacro.self
-    ]
-
+  @Suite
+  struct AutoFactoryDiagnosticsTests {
     @Test func structThrowsError() {
       assertMacroExpansion(
         """
@@ -48,12 +43,12 @@ internal import Testing
         """
         @AutoFactory
         final class MissingDependencies {
-          init() {}
+          init(dependencies: Dependencies) {}
         }
         """,
         expandedSource: """
           final class MissingDependencies {
-            init() {}
+            init(dependencies: Dependencies) {}
           }
           """,
         diagnostics: [

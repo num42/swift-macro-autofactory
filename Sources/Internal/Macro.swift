@@ -5,10 +5,10 @@ public import SwiftSyntaxMacros
 
 public struct AutoFactoryMacro: MemberMacro {
   public enum MacroDiagnostic: String, DiagnosticMessage {
-    case requiresClass = "#AutoFactory requires a class"
-    case requiresDependencies = "#AutoFactory requires a nested Dependencies struct"
+    case requiresClass = "@AutoFactory requires a class"
+    case requiresDependencies = "@AutoFactory requires a nested Dependencies struct"
     case requiresDependenciesInitializer =
-      "#AutoFactory requires initializers with a dependencies parameter"
+      "@AutoFactory requires initializers with a dependencies parameter"
 
     public var message: String { rawValue }
 
@@ -20,14 +20,14 @@ public struct AutoFactoryMacro: MemberMacro {
   }
 
   public static func expansion(
-    of node: SwiftSyntax.AttributeSyntax,
-    providingMembersOf declaration: some SwiftSyntax.DeclGroupSyntax,
+    of attribute: AttributeSyntax,
+    providingMembersOf declaration: some DeclGroupSyntax,
     conformingTo protocols: [TypeSyntax],
-    in context: some SwiftSyntaxMacros.MacroExpansionContext
-  ) throws -> [SwiftSyntax.DeclSyntax] {
+    in context: some MacroExpansionContext
+  ) throws -> [DeclSyntax] {
     /*
      Expansion algorithm (high level):
-    
+
      1. Extract the class name.
      2. Collect all initializers declared directly in the class.
      3. For each initializer, capture its parameter list (name and type).
@@ -39,7 +39,7 @@ public struct AutoFactoryMacro: MemberMacro {
         `container.resolve()` for each dependency and registers the resulting `Factory`.
      7. Return a single nested `Factory` class containing the initializer, the generated methods,
         and the `register(in:scope:)` helper.
-    
+
      Assumptions:
      - The declaration is a class and contains a nested `Dependencies` struct with stored properties.
      - Initializers include a parameter named `dependencies` of the appropriate type.
@@ -47,10 +47,9 @@ public struct AutoFactoryMacro: MemberMacro {
 
     guard let classDeclaration = declaration.as(ClassDeclSyntax.self) else {
       let diagnostic = Diagnostic(
-        node: Syntax(node),
+        node: Syntax(attribute),
         message: MacroDiagnostic.requiresClass
       )
-      context.diagnose(diagnostic)
       throw DiagnosticsError(diagnostics: [diagnostic])
     }
 
@@ -71,10 +70,9 @@ public struct AutoFactoryMacro: MemberMacro {
       })
     else {
       let diagnostic = Diagnostic(
-        node: Syntax(node),
+        node: Syntax(attribute),
         message: MacroDiagnostic.requiresDependenciesInitializer
       )
-      context.diagnose(diagnostic)
       throw DiagnosticsError(diagnostics: [diagnostic])
     }
 
@@ -85,10 +83,9 @@ public struct AutoFactoryMacro: MemberMacro {
         .first(where: { $0.name.text == "Dependencies" })
     else {
       let diagnostic = Diagnostic(
-        node: Syntax(node),
+        node: Syntax(attribute),
         message: MacroDiagnostic.requiresDependencies
       )
-      context.diagnose(diagnostic)
       throw DiagnosticsError(diagnostics: [diagnostic])
     }
 
