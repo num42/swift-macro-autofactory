@@ -1,3 +1,4 @@
+internal import MacroTestHelper
 internal import SwiftSyntaxMacrosGenericTestSupport
 internal import Testing
 
@@ -7,7 +8,7 @@ internal import Testing
   @Suite
   struct AutoFactoryDiagnosticsTests {
     @Test func structThrowsError() {
-      assertMacroExpansion(
+      MacroTestHelper.assertMacroExpansion(
         """
         @AutoFactory
         struct NotAClass {
@@ -39,7 +40,7 @@ internal import Testing
     }
 
     @Test func missingDependenciesStructThrowsError() {
-      assertMacroExpansion(
+      MacroTestHelper.assertMacroExpansion(
         """
         @AutoFactory
         final class MissingDependencies {
@@ -63,7 +64,7 @@ internal import Testing
     }
 
     @Test func missingDependenciesInitializerThrowsError() {
-      assertMacroExpansion(
+      MacroTestHelper.assertMacroExpansion(
         """
         @AutoFactory
         final class MissingDependenciesParameter {

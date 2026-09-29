@@ -1,4 +1,4 @@
-@attached(member, names: arbitrary)
+@attached(member, names: named(Factory))
 public macro AutoFactory() =
   #externalMacro(
     module: "AutoFactoryMacros",
